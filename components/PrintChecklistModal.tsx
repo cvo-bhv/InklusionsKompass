@@ -116,10 +116,10 @@ export const PrintChecklistModal: React.FC<Props> = ({ isOpen, onClose, checklis
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose}>
-      <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col relative animate-scale-in" onClick={e => e.stopPropagation()}>
+      <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col relative animate-scale-in overflow-hidden" onClick={e => e.stopPropagation()}>
         
         {/* Header */}
-        <div className="flex justify-between items-center p-6 border-b border-slate-100">
+        <div className="flex justify-between items-center p-4 sm:p-6 border-b border-slate-100 shrink-0">
           <h2 className="text-xl font-bold text-slate-800">Druckvorschau</h2>
           <button 
             onClick={onClose}
@@ -130,8 +130,8 @@ export const PrintChecklistModal: React.FC<Props> = ({ isOpen, onClose, checklis
         </div>
 
         {/* Scrollable Content (Preview) */}
-        <div className="flex-1 overflow-y-auto p-8 bg-slate-50">
-          <div ref={printRef} className="bg-white p-8 shadow-sm border border-slate-200 mx-auto max-w-xl">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-8 bg-slate-50 min-h-0">
+          <div ref={printRef} className="bg-white p-6 sm:p-8 shadow-sm border border-slate-200 mx-auto max-w-xl">
             {/* Print Header */}
             <div className="border-b-2 border-slate-800 pb-4 mb-6 flex justify-between items-end">
               <div>
@@ -182,7 +182,7 @@ export const PrintChecklistModal: React.FC<Props> = ({ isOpen, onClose, checklis
         </div>
 
         {/* Footer Actions */}
-        <div className="p-6 border-t border-slate-100 bg-white rounded-b-xl flex justify-end gap-3">
+        <div className="p-4 sm:p-6 border-t border-slate-100 bg-white flex justify-end gap-3 shrink-0">
           <button 
             onClick={onClose}
             className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-medium transition-colors"
