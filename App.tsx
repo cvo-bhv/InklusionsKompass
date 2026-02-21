@@ -43,6 +43,8 @@ const App: React.FC = () => {
         setIsFullscreen(true);
       }).catch((err) => {
         console.error(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+        // Show a user-friendly message if fullscreen is not allowed
+        alert("Der Vollbildmodus ist in dieser Umgebung leider nicht verfügbar.");
       });
     } else {
       if (document.exitFullscreen) {

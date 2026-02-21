@@ -1,5 +1,5 @@
 {
   "name": "Remix: Wegweiser Lernzieldifferenz mit Fritzchen",
   "description": "Interaktiver Fahrplan zur Entscheidungshilfe und Durchführung von Lernzieldifferenzierung nach §19.",
-  "requestFramePermissions": []
+  "requestFramePermissions": ["fullscreen"]
 }
