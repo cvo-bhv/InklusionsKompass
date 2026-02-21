@@ -16,48 +16,101 @@ export const PrintChecklistModal: React.FC<Props> = ({ isOpen, onClose, checklis
   const handlePrint = () => {
     const printContent = printRef.current;
     if (printContent) {
-      const originalContents = document.body.innerHTML;
-      const printContents = printContent.innerHTML;
-      
-      // Create a temporary container for printing to avoid messing up React state/DOM
-      const printContainer = document.createElement('div');
-      printContainer.innerHTML = printContents;
-      printContainer.className = 'print-container';
-      
-      // Add print specific styles
-      const style = document.createElement('style');
-      style.innerHTML = `
-        @media print {
-          body * {
-            visibility: hidden;
-          }
-          .print-container, .print-container * {
-            visibility: visible;
-          }
-          .print-container {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            padding: 20px;
-            background: white;
-            color: black;
-          }
-          /* Ensure background colors are printed */
-          * {
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-          }
-        }
-      `;
-      document.head.appendChild(style);
-      document.body.appendChild(printContainer);
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'fixed';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.style.border = '0';
+      document.body.appendChild(iframe);
 
-      window.print();
+      const doc = iframe.contentWindow?.document;
+      if (doc) {
+        doc.open();
+        doc.write(`
+          <html>
+            <head>
+              <title>${checklist.title}</title>
+              <style>
+                body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 40px; color: #1e293b; line-height: 1.5; }
+                .header { border-bottom: 2px solid #1e293b; padding-bottom: 12px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-end; }
+                .title { font-size: 24px; font-weight: bold; margin: 0; color: #0f172a; }
+                .subtitle { color: #64748b; font-size: 14px; margin-top: 4px; }
+                .date { font-size: 12px; color: #94a3b8; }
+                .description { font-style: italic; border-left: 4px solid #6366f1; padding: 12px 16px; background: #f5f3ff; margin-bottom: 32px; color: #475569; }
+                .section { margin-bottom: 32px; page-break-inside: avoid; }
+                .section-title { font-size: 18px; font-weight: bold; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; margin-bottom: 16px; color: #1e293b; }
+                .item { display: flex; gap: 14px; margin-bottom: 14px; align-items: flex-start; }
+                .checkbox { width: 18px; height: 18px; border: 1px solid #cbd5e1; flex-shrink: 0; margin-top: 3px; border-radius: 2px; }
+                .item-label { font-weight: 600; color: #1e293b; }
+                .item-subtext { font-size: 14px; color: #64748b; margin-top: 2px; }
+                .notes { margin-top: 48px; border-top: 1px solid #e2e8f0; padding-top: 12px; }
+                .notes-label { font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; font-weight: bold; }
+                .notes-box { height: 120px; border: 1px solid #f1f5f9; background: #f8fafc; margin-top: 8px; border-radius: 6px; }
+                @media print {
+                  body { padding: 0; }
+                  .description { background-color: #f5f3ff !important; -webkit-print-color-adjust: exact; }
+                  .notes-box { background-color: #f8fafc !important; -webkit-print-color-adjust: exact; }
+                  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+                }
+              </style>
+            </head>
+            <body>
+              <div class="header">
+                <div>
+                  <h1 class="title">${checklist.title}</h1>
+                  <p class="subtitle">Inklusions-Kompass CVO Oberschule</p>
+                </div>
+                <div class="date">Stand: ${new Date().toLocaleDateString('de-DE')}</div>
+              </div>
+              <div class="description">${checklist.description}</div>
+              ${checklist.sections.map(section => `
+                <div class="section">
+                  <h3 class="section-title">${section.title}</h3>
+                  ${section.items.map(item => `
+                    <div class="item">
+                      <div class="checkbox"></div>
+                      <div>
+                        <div class="item-label">${item.label}</div>
+                        ${item.subtext ? `<div class="item-subtext">${item.subtext}</div>` : ''}
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+              `).join('')}
+              <div class="notes">
+                <div class="notes-label">Notizen</div>
+                <div class="notes-box"></div>
+              </div>
+            </body>
+          </html>
+        `);
+        doc.close();
 
-      // Cleanup
-      document.body.removeChild(printContainer);
-      document.head.removeChild(style);
+        // Wait for content to load before printing
+        iframe.onload = () => {
+          iframe.contentWindow?.focus();
+          iframe.contentWindow?.print();
+          // Remove iframe after a delay
+          setTimeout(() => {
+            document.body.removeChild(iframe);
+          }, 1000);
+        };
+        
+        // Fallback for browsers where onload might not fire for injected content
+        setTimeout(() => {
+          if (document.body.contains(iframe)) {
+            iframe.contentWindow?.focus();
+            iframe.contentWindow?.print();
+            setTimeout(() => {
+              if (document.body.contains(iframe)) {
+                document.body.removeChild(iframe);
+              }
+            }, 1000);
+          }
+        }, 500);
+      }
     }
   };
 
