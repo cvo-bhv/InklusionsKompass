@@ -17,12 +17,15 @@ export const PrintChecklistModal: React.FC<Props> = ({ isOpen, onClose, checklis
     const printContent = printRef.current;
     if (printContent) {
       const iframe = document.createElement('iframe');
-      iframe.style.position = 'fixed';
-      iframe.style.right = '0';
-      iframe.style.bottom = '0';
-      iframe.style.width = '0';
-      iframe.style.height = '0';
+      
+      // iOS/iPadOS Fix: Iframe must have dimensions and be "visible" (but off-screen) to render content for printing
+      iframe.style.position = 'absolute';
+      iframe.style.width = '1000px'; // Sufficient width for layout
+      iframe.style.height = '1000px';
+      iframe.style.top = '-10000px';
+      iframe.style.left = '-10000px';
       iframe.style.border = '0';
+      
       document.body.appendChild(iframe);
 
       const doc = iframe.contentWindow?.document;
@@ -33,7 +36,13 @@ export const PrintChecklistModal: React.FC<Props> = ({ isOpen, onClose, checklis
             <head>
               <title>${checklist.title}</title>
               <style>
-                body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 40px; color: #1e293b; line-height: 1.5; }
+                body { 
+                  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+                  padding: 40px; 
+                  color: #1e293b; 
+                  line-height: 1.5; 
+                  background-color: white; /* Ensure white background */
+                }
                 .header { border-bottom: 2px solid #1e293b; padding-bottom: 12px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-end; }
                 .title { font-size: 24px; font-weight: bold; margin: 0; color: #0f172a; }
                 .subtitle { color: #64748b; font-size: 14px; margin-top: 4px; }
@@ -49,7 +58,7 @@ export const PrintChecklistModal: React.FC<Props> = ({ isOpen, onClose, checklis
                 .notes-label { font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; font-weight: bold; }
                 .notes-box { height: 120px; border: 1px solid #f1f5f9; background: #f8fafc; margin-top: 8px; border-radius: 6px; }
                 @media print {
-                  body { padding: 0; }
+                  body { padding: 0; background-color: white; }
                   .description { background-color: #f5f3ff !important; -webkit-print-color-adjust: exact; }
                   .notes-box { background-color: #f8fafc !important; -webkit-print-color-adjust: exact; }
                   * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
@@ -88,28 +97,27 @@ export const PrintChecklistModal: React.FC<Props> = ({ isOpen, onClose, checklis
         `);
         doc.close();
 
-        // Wait for content to load before printing
-        iframe.onload = () => {
-          iframe.contentWindow?.focus();
-          iframe.contentWindow?.print();
-          // Remove iframe after a delay
-          setTimeout(() => {
-            document.body.removeChild(iframe);
-          }, 1000);
-        };
-        
-        // Fallback for browsers where onload might not fire for injected content
-        setTimeout(() => {
-          if (document.body.contains(iframe)) {
+        // Helper to trigger print
+        const triggerPrint = () => {
+          try {
             iframe.contentWindow?.focus();
             iframe.contentWindow?.print();
+          } catch (e) {
+            console.error('Print failed', e);
+          } finally {
+            // Remove iframe after a delay to ensure print dialog has opened
+            // iOS might need the iframe to stay during the print dialog setup
             setTimeout(() => {
               if (document.body.contains(iframe)) {
                 document.body.removeChild(iframe);
               }
-            }, 1000);
+            }, 2000);
           }
-        }, 500);
+        };
+
+        // Wait for content to load before printing
+        // On iOS, a small timeout is often more reliable than onload for dynamic content
+        setTimeout(triggerPrint, 500);
       }
     }
   };
