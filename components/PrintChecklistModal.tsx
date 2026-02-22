@@ -13,7 +13,27 @@ export const PrintChecklistModal: React.FC<Props> = ({ isOpen, onClose, checklis
 
   if (!isOpen) return null;
 
-  const handlePrint = () => {
+  const handlePrint = async () => {
+    // Check for fullscreen and exit if active, as browsers often block printing in fullscreen
+    const doc = document as any;
+    const isFullscreen = doc.fullscreenElement || doc.webkitFullscreenElement || doc.mozFullScreenElement || doc.msFullscreenElement;
+
+    if (isFullscreen) {
+      try {
+        if (doc.exitFullscreen) {
+          await doc.exitFullscreen();
+        } else if (doc.webkitExitFullscreen) {
+          await doc.webkitExitFullscreen();
+        } else if (doc.msExitFullscreen) {
+          await doc.msExitFullscreen();
+        }
+        // Add a small delay to ensure the browser has repainted/settled
+        await new Promise(resolve => setTimeout(resolve, 500));
+      } catch (err) {
+        console.error("Error exiting fullscreen:", err);
+      }
+    }
+
     const printContent = printRef.current;
     if (printContent) {
       const iframe = document.createElement('iframe');

@@ -38,31 +38,60 @@ const App: React.FC = () => {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().then(() => {
+    const elem = document.documentElement as any;
+    const doc = document as any;
+
+    const isFullscreen = doc.fullscreenElement || doc.webkitFullscreenElement || doc.mozFullScreenElement || doc.msFullscreenElement;
+
+    if (!isFullscreen) {
+      if (elem.requestFullscreen) {
+        elem.requestFullscreen().then(() => {
+          setIsFullscreen(true);
+        }).catch((err: any) => {
+          console.error(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+          alert("Der Vollbildmodus ist in dieser Umgebung leider nicht verfügbar.");
+        });
+      } else if (elem.webkitRequestFullscreen) { /* Safari */
+        elem.webkitRequestFullscreen();
         setIsFullscreen(true);
-      }).catch((err) => {
-        console.error(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
-        // Show a user-friendly message if fullscreen is not allowed
-        alert("Der Vollbildmodus ist in dieser Umgebung leider nicht verfügbar.");
-      });
+      } else if (elem.msRequestFullscreen) { /* IE11 */
+        elem.msRequestFullscreen();
+        setIsFullscreen(true);
+      } else {
+        alert("Ihr Browser unterstützt den Vollbildmodus leider nicht.");
+      }
     } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen().then(() => {
+      if (doc.exitFullscreen) {
+        doc.exitFullscreen().then(() => {
           setIsFullscreen(false);
         });
+      } else if (doc.webkitExitFullscreen) { /* Safari */
+        doc.webkitExitFullscreen();
+        setIsFullscreen(false);
+      } else if (doc.msExitFullscreen) { /* IE11 */
+        doc.msExitFullscreen();
+        setIsFullscreen(false);
       }
     }
   };
 
   useEffect(() => {
     const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
+      const doc = document as any;
+      const isFullscreen = !!(doc.fullscreenElement || doc.webkitFullscreenElement || doc.mozFullScreenElement || doc.msFullscreenElement);
+      setIsFullscreen(isFullscreen);
     };
 
     document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+    
     return () => {
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
     };
   }, []);
 
